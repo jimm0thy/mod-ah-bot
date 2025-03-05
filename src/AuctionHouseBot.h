@@ -132,6 +132,7 @@ private:
 
     uint32 AHBplayerAccount;
     ObjectGuid::LowType AHBplayerGUID;
+    std::string AHBnoBuyList; // added to make sure to not buy from any other AHBot
     uint32 ItemsPerCycle;
 
     bool DisabledItemTextFilter;

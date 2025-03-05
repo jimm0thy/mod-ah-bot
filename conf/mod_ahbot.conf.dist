@@ -26,6 +26,9 @@
 #        AuctionHouseBot.GUID is the GUID (in characters->characters table)
 #         of the player you want to run as the auction bot.
 #    Default: 0 (Auction House Bot disabled)
+#
+#	 AuctionHouseBot.NoBuyList
+#		List of character GUIDs to not buy from		
 ###############################################################################
 
 AuctionHouseBot.DEBUG = 0
@@ -35,6 +38,7 @@ AuctionHouseBot.EnableBuyer = 1
 AuctionHouseBot.Account = 14
 AuctionHouseBot.GUID = 3
 AuctionHouseBot.ItemsPerCycle = 75
+AuctionHouseBot.NoBuyList = 
 
 ###############################################################################
 #    AuctionHouseBot.<faction>.MinItems

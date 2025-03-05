@@ -448,28 +448,35 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
         return;
     }
 
-    uint32 auctions = auctionHouse->Getcount();
+    uint32 auctions = auctionHouse->Getcount();    
 
     uint32 items = 0;
 
-    if (auctions >= minItems)
+    /*if (auctions >= minItems)
     {
         if (debug_Out)
             LOG_ERROR("module", "AHSeller: Auctions above minimum");
         return;
     }
+    */
+   
 
-    if (auctions >= maxItems)
+    QueryResult result = CharacterDatabase.Query("SELECT id FROM auctionhouse where itemowner = {} and houseid = {}", AHBplayerGUID, config->GetAHID()); // only count our own auctions
+    uint32 myAuctions = (result->GetRowCount());
+    LOG_INFO("module", "[AHBot] my AH({}) Auctions = {}", config->GetAHID(), myAuctions);
+
+    if (myAuctions >= maxItems)
     {
-        if (debug_Out)
-            LOG_ERROR("module", "AHSeller: Auctions at or above maximum");
+        //if (debug_Out)
+           // LOG_ERROR("module", "AHSeller: Auctions at or above maximum");
+        LOG_INFO("module", "[AHBot] AHSeller: Auctions for AH({}) at or above maximum", config->GetAHID());
         return;
     }
-
-    if ((maxItems - auctions) >= ItemsPerCycle)
+    
+    if ((maxItems - myAuctions) >= ItemsPerCycle) // only count our own auctions
         items = ItemsPerCycle;
     else
-        items = (maxItems - auctions);
+        items = (maxItems - myAuctions); // only count our own auctions
 
     if (debug_Out)
         LOG_INFO("module", "AHSeller: Adding {} Auctions", items);
@@ -567,17 +574,35 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
         return;
     }
 
-    QueryResult result = CharacterDatabase.Query("SELECT id FROM auctionhouse WHERE itemowner<>{} AND buyguid<>{}", AHBplayerGUID, AHBplayerGUID);
-
+    // Filter out auctions from our NoBuyList
+    std::string listNotToBuyFrom;
+    if (!AHBnoBuyList.size() == 0)
+    {
+        listNotToBuyFrom = (std::to_string(AHBplayerGUID) + "," + AHBnoBuyList);
+        LOG_INFO("module", "[AHBot] NoBuyList Activated: {}", listNotToBuyFrom);
+    }
+    else
+    {
+        listNotToBuyFrom = (std::to_string(AHBplayerGUID));
+        LOG_INFO("module", "[AHBot] NoBuyList Not Active: {}", listNotToBuyFrom);
+    }
+    
+    QueryResult result = CharacterDatabase.Query("SELECT id FROM auctionhouse WHERE itemowner not in ({}) AND buyguid not in ({}) AND houseid = {}", listNotToBuyFrom, listNotToBuyFrom, config->GetAHID());
+    ///// Auction list now filtered
+   
     if (!result)
+        LOG_INFO("module", "[AHBot] No auctions to buy from found");
         return;
 
-    if (result->GetRowCount() == 0)
+        if (result->GetRowCount() == 0)
+            LOG_INFO("module", "[AHBot] No auctions to buy from found");
         return;
 
     // Fetches content of selected AH
     AuctionHouseObject* auctionHouse =  sAuctionMgr->GetAuctionsMap(config->GetAHFID());
     vector<uint32> possibleBids;
+
+    LOG_INFO("module", "[AHBot] Found {} Auctions available to buy from", result->GetRowCount());
 
     do
     {
@@ -651,8 +676,9 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
 
         if (doBuyout == true || doBid == true)
         {
-            if (debug_Out)
-            {
+            // Let's output this info always for now
+            //if (debug_Out)
+           // {
                 LOG_INFO("module", "-------------------------------------------------");
                 LOG_INFO("module", "AHBuyer: Info for Auction #{}:", auction->Id);
                 LOG_INFO("module", "AHBuyer: AuctionHouse: {}", auction->GetHouseId());
@@ -676,7 +702,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
                 LOG_INFO("module", "AHBuyer: Item Level: {}", prototype->ItemLevel);
                 LOG_INFO("module", "AHBuyer: Ammo Type: {}", prototype->AmmoType);
                 LOG_INFO("module", "-------------------------------------------------");
-            }
+           // }
 
             if (doBid)
             {
@@ -791,6 +817,7 @@ void AuctionHouseBot::InitializeConfiguration()
 
     AHBplayerAccount = sConfigMgr->GetOption<uint32>("AuctionHouseBot.Account", 0);
     AHBplayerGUID = sConfigMgr->GetOption<uint32>("AuctionHouseBot.GUID", 0);
+    AHBnoBuyList = sConfigMgr->GetOption<std::string>("AuctionHouseBot.NoBuyList", "");
     ItemsPerCycle = sConfigMgr->GetOption<uint32>("AuctionHouseBot.ItemsPerCycle", 200);
 
     // Stack Ratios
