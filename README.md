@@ -12,6 +12,8 @@ A fork of the auction house bot for AzerothCore.  This fork gives a much more bl
 	- Empty the list to have crafted goods appear in the AH, or use other IDs you want to keep separate
  - Moved database configuration completely to config
 
+New: Added NoBuyList where you can input a list of player(bot) GUIDs to not buy from, Updated auction limits to only be affected by our own auctions
+
 ## Installation
 
 ```
