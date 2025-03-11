@@ -462,8 +462,19 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
    
 
     QueryResult result = CharacterDatabase.Query("SELECT id FROM auctionhouse where itemowner = {} and houseid = {}", AHBplayerGUID, config->GetAHID()); // only count our own auctions
-    uint32 myAuctions = (result->GetRowCount());
+    uint32 myAuctions;
     LOG_INFO("module", "[AHBot] my AH({}) Auctions = {}", config->GetAHID(), myAuctions);
+
+    if (!result)
+    {
+        // We have no auctions
+        myAuctions = 0;
+    }
+    else
+    {
+        // We have current auctions
+        myAuctions = (result->GetRowCount());
+    }
 
     if (myAuctions >= maxItems)
     {
